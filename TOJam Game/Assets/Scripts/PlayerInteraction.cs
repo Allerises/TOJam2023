@@ -8,6 +8,7 @@ public class PlayerInteraction : MonoBehaviour
 
     Rigidbody rb;
     CharacterController cc;
+    public Material rend;
 
     bool hitched = false;
     public HingeJoint wagon;
@@ -19,6 +20,7 @@ public class PlayerInteraction : MonoBehaviour
     public float forwardHoldPos, upHoldPos;
     public Transform pointer;
     public LayerMask bodyLayer;
+    Transform heldObject;
 
     // Start is called before the first frame update
     void Start()
@@ -53,19 +55,32 @@ public class PlayerInteraction : MonoBehaviour
     {
         if(interactable)
         {
+            Debug.Log("trying to grab something");
+            
             RaycastHit hit;
-            if(Physics.Raycast(transform.position, pointer.forward, out hit, 3f, bodyLayer))
+            if(Physics.Raycast(pointer.position, pointer.forward, out hit, 10f, bodyLayer) && !holdingBody)
             {
-
+                holdingBody = true;
+                heldObject = hit.transform;
+                hit.transform.parent = pointer;
+                hit.transform.position = transform.position + transform.forward * forwardHoldPos + transform.up * upHoldPos;
+                hit.rigidbody.isKinematic = true;
             }
-            holdingBody = !holdingBody;
+            else if(heldObject)
+            {
+                holdingBody = false;
+                heldObject.parent = null;
+                heldObject.GetComponent<Rigidbody>().isKinematic = false;
+                heldObject = null;
+            }
         }
     }
 
     void OnTriggerEnter(Collider other)
     {
         if(other.CompareTag("Body"))
-        {
+        {   
+            rend.SetColor("_Color", Color.green);
             interactable = true;
         }
     }
@@ -74,6 +89,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         if(other.CompareTag("Body"))
         {
+            rend.SetColor("_Color", Color.green);
             interactable = false;
         }
     }
