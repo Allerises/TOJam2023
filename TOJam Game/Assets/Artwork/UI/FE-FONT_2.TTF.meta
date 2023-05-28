@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 117137cb272ec46a589981f54e57ec8f
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - FE-Font
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 30d6f1988c4dc472a95f8dd00a7d3a47, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using StarterAssets;
 
 public class PlayerInteraction : MonoBehaviour
 {
@@ -12,9 +13,10 @@ public class PlayerInteraction : MonoBehaviour
     public Image crosshair;
 
     bool hitched = false;
-    public HingeJoint hitch;
+    public HingeJoint hitch, wagonJoint;
     public Rigidbody wagon;
     public float forwardOffset, upOffset;
+    public Transform wagonBase;
     public TextMeshProUGUI hitchText;
 
     bool holdingBody = false;
@@ -22,6 +24,7 @@ public class PlayerInteraction : MonoBehaviour
     public Transform pointer;
     public LayerMask bodyLayer;
     Transform heldObject;
+    public TextMeshProUGUI bodyText;
 
     public WheelCollider wheel;
 
@@ -50,11 +53,12 @@ public class PlayerInteraction : MonoBehaviour
             hitch.transform.rotation = Quaternion.identity;
             hitch.transform.Translate(new Vector3(0, upOffset, 0));
             transform.position = hitch.transform.position + hitch.transform.forward * forwardOffset - hitch.transform.up * upOffset;
-            transform.rotation = cc.transform.rotation;
             cc.enabled = true;
+            wagonJoint.connectedBody = null;
+            StartCoroutine(UnparentBodies());
         }
 
-        hitch.connectedBody = hitched ? rb : wagon;
+        hitch.connectedBody = hitched ? rb : null;
         hitchText.text = hitched ? "Unhitch Wagon" : "Hitch Wagon";
     }
 
@@ -63,6 +67,7 @@ public class PlayerInteraction : MonoBehaviour
         RaycastHit hit;
         if(Physics.Raycast(pointer.position, pointer.forward, out hit, 10f, bodyLayer) && !holdingBody)
         {
+            GetComponent<ThirdPersonController>().MoveSpeed = 1f;
             holdingBody = true;
             heldObject = hit.transform;
             hit.transform.parent = pointer;
@@ -71,10 +76,30 @@ public class PlayerInteraction : MonoBehaviour
         }
         else if(holdingBody)
         {
+            GetComponent<ThirdPersonController>().MoveSpeed = 2f;
             holdingBody = false;
             heldObject.parent = null;
             heldObject.GetComponent<Rigidbody>().isKinematic = false;
             heldObject = null;
         }
+        bodyText.text = holdingBody ? "Drop Body" : "Grab Body";
+    }
+
+    public void OnResetWagon()
+    {
+        if(hitched)
+        {
+            OnHitch();
+        }
+        wagon.transform.position = wagon.transform.position + Vector3.up;
+        hitch.transform.position = wagon.transform.position + wagon.transform.forward.normalized * 1.75f + Vector3.down;
+        wagon.transform.rotation = Quaternion.identity;
+    }
+
+    IEnumerator UnparentBodies()
+    {
+        yield return new WaitForSeconds(.1f);
+        hitch.transform.position = wagon.transform.position + wagon.transform.forward.normalized * 1.75f;
+        wagonJoint.connectedBody = hitch.GetComponent<Rigidbody>();
     }
 }
