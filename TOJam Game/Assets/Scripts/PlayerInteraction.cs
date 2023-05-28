@@ -2,31 +2,36 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class PlayerInteraction : MonoBehaviour
 {
 
     Rigidbody rb;
     CharacterController cc;
-    public Material rend;
+    public Image crosshair;
 
     bool hitched = false;
-    public HingeJoint wagon;
+    public HingeJoint hitch;
+    public Rigidbody wagon;
     public float forwardOffset, upOffset;
     public TextMeshProUGUI hitchText;
 
-    bool interactable = false;
     bool holdingBody = false;
     public float forwardHoldPos, upHoldPos;
     public Transform pointer;
     public LayerMask bodyLayer;
     Transform heldObject;
 
+    public WheelCollider wheel;
+
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         cc = GetComponent<CharacterController>();
+        
+        wheel.ConfigureVehicleSubsteps(2, 50, 100);
     }
 
     // Update is called once per frame
@@ -42,55 +47,34 @@ public class PlayerInteraction : MonoBehaviour
         if(hitched)
         {
             cc.enabled = false;
-            transform.position = wagon.transform.position + wagon.transform.forward * forwardOffset + wagon.transform.up * upOffset;
+            hitch.transform.rotation = Quaternion.identity;
+            hitch.transform.Translate(new Vector3(0, upOffset, 0));
+            transform.position = hitch.transform.position + hitch.transform.forward * forwardOffset - hitch.transform.up * upOffset;
             transform.rotation = cc.transform.rotation;
             cc.enabled = true;
         }
 
-        wagon.connectedBody = hitched ? rb : null;
+        hitch.connectedBody = hitched ? rb : wagon;
         hitchText.text = hitched ? "Unhitch Wagon" : "Hitch Wagon";
     }
 
     public void OnInteract()
     {
-        if(interactable)
+        RaycastHit hit;
+        if(Physics.Raycast(pointer.position, pointer.forward, out hit, 10f, bodyLayer) && !holdingBody)
         {
-            Debug.Log("trying to grab something");
-            
-            RaycastHit hit;
-            if(Physics.Raycast(pointer.position, pointer.forward, out hit, 10f, bodyLayer) && !holdingBody)
-            {
-                holdingBody = true;
-                heldObject = hit.transform;
-                hit.transform.parent = pointer;
-                hit.transform.position = transform.position + transform.forward * forwardHoldPos + transform.up * upHoldPos;
-                hit.rigidbody.isKinematic = true;
-            }
-            else if(heldObject)
-            {
-                holdingBody = false;
-                heldObject.parent = null;
-                heldObject.GetComponent<Rigidbody>().isKinematic = false;
-                heldObject = null;
-            }
+            holdingBody = true;
+            heldObject = hit.transform;
+            hit.transform.parent = pointer;
+            hit.transform.position = pointer.position + pointer.forward.normalized * forwardHoldPos + pointer.up * upHoldPos;
+            hit.rigidbody.isKinematic = true;
         }
-    }
-
-    void OnTriggerEnter(Collider other)
-    {
-        if(other.CompareTag("Body"))
-        {   
-            rend.SetColor("_Color", Color.green);
-            interactable = true;
-        }
-    }
-
-    void OntriggerExit(Collider other)
-    {
-        if(other.CompareTag("Body"))
+        else if(holdingBody)
         {
-            rend.SetColor("_Color", Color.green);
-            interactable = false;
+            holdingBody = false;
+            heldObject.parent = null;
+            heldObject.GetComponent<Rigidbody>().isKinematic = false;
+            heldObject = null;
         }
     }
 }
